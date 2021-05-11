@@ -10,6 +10,11 @@ export const GameList = (props) => {
         getGames()
     }, [])
 
+    const handleEditButton = e => {
+        const gameId = parseInt(e.target.id.split("--")[1])
+        history.push(`/games/${gameId}/edit`)
+    }
+
     return (
         <article className="games">
             <button className="btn btn-2 btn-sep icon-create"
@@ -23,6 +28,7 @@ export const GameList = (props) => {
                         <div className="game__title">{game.title} by {game.maker}</div>
                         <div className="game__players">{game.number_of_players} players needed</div>
                         <div className="game__skillLevel">Skill level is {game.skill_level}</div>
+                        <button classname="game_editButton" id={"edit--" + game.id} onClick={handleEditButton}>Edit Game</button>
                     </section>
                 })
             }

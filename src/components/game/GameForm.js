@@ -1,11 +1,12 @@
 import React, { useContext, useState, useEffect } from "react"
 import { GameContext } from "./GameProvider.js"
-import { useHistory } from 'react-router-dom'
+import { useHistory, useParams } from 'react-router-dom'
 
 
 export const GameForm = () => {
     const history = useHistory()
-    const { createGame, getGameTypes, gameTypes } = useContext(GameContext)
+    const { createGame, getGameTypes, gameTypes, getGameById, updateGame } = useContext(GameContext)
+    const { gameId } = useParams()
 
     /*
         Since the input fields are bound to the values of
@@ -26,15 +27,50 @@ export const GameForm = () => {
     */
     useEffect(() => {
         getGameTypes()
+        if (gameId) {
+            getGameById(parseInt(gameId))
+                .then(editGame => {
+                    setCurrentGame({
+                        skillLevel: editGame.skill_level,
+                        numberOfPlayers: editGame.number_of_players,
+                        title: editGame.title,
+                        maker: editGame.maker,
+                        gameTypeId: editGame.gametype.id
+                    })
+                })
+        }
     }, [])
 
 
     const handleInputChange = e => {
-        const newGameState = { ...currentGame}
+        const newGameState = { ...currentGame }
         newGameState[e.target.name] = e.target.value
         if (e.target.name.includes("Id")) newGameState[e.target.name] = parseInt(e.target.value)
         setCurrentGame(newGameState)
     }
+
+    const handleSubmit = e => {
+        // Prevent form from being submitted
+        e.preventDefault()
+
+        const game = {
+            maker: currentGame.maker,
+            title: currentGame.title,
+            numberOfPlayers: parseInt(currentGame.numberOfPlayers),
+            skillLevel: parseInt(currentGame.skillLevel),
+            gameTypeId: parseInt(currentGame.gameTypeId)
+        }
+
+        // are we Editing or Creating?
+        if (gameId) {
+            updateGame(gameId, game)
+                .then(() => history.push("/games"))
+        } else {
+            createGame(game)
+                .then(() => history.push("/games"))
+        }
+    }
+
 
     return (
         <form className="gameForm">
@@ -89,26 +125,9 @@ export const GameForm = () => {
                 </div>
             </fieldset>
 
-            {/* You create the rest of the input fields for each game property */}
-
             <button type="submit"
-                onClick={evt => {
-                    // Prevent form from being submitted
-                    evt.preventDefault()
-
-                    const game = {
-                        maker: currentGame.maker,
-                        title: currentGame.title,
-                        numberOfPlayers: parseInt(currentGame.numberOfPlayers),
-                        skillLevel: parseInt(currentGame.skillLevel),
-                        gameTypeId: parseInt(currentGame.gameTypeId)
-                    }
-
-                    // Send POST request to your API
-                    createGame(game)
-                        .then(() => history.push("/games"))
-                }}
-                className="btn btn-primary">Create</button>
+                onClick={handleSubmit}
+                className="btn btn-primary">{gameId ? "Edit" : "Create"}</button>
         </form>
     )
 }
